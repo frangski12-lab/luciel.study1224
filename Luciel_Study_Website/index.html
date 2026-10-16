@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Luciel | Study Space</title>
+<style>
+:root{--ink:#25243a;--muted:#77758b;--accent:#7567d8;--paper:#fff;--bg:#f4f3fb;--line:#e8e6f3}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px clamp(14px,3vw,34px);background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.brand{font-weight:850;font-size:1.35rem;letter-spacing:.02em}.brand span{color:var(--accent)}
+header small{display:block;color:var(--muted);font-weight:500;font-size:.75rem;letter-spacing:0}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,.upload-label,select,input[type=color]{border:1px solid var(--line);background:white;color:var(--ink);border-radius:11px;padding:10px 12px;font:inherit;cursor:pointer}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+button:hover,.upload-label:hover{filter:brightness(.97)}
+main{max-width:1200px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:20px}
+.workspace{min-width:0}.welcome{margin:0 0 14px}.welcome h1{margin:0 0 4px;font-size:clamp(1.35rem,3vw,2rem)}.welcome p{margin:0;color:var(--muted)}
+.paper-wrap{background:#e9e7f4;border-radius:18px;padding:clamp(10px,2vw,22px);overflow:auto;min-height:300px;display:flex;justify-content:center;align-items:flex-start}
+.paper{background:var(--paper);position:relative;box-shadow:0 8px 28px #34305a18;border:1px solid #e5e3ee;overflow:hidden;flex-shrink:0;touch-action:none}
+.paper.landscape{width:min(100%,900px);aspect-ratio:1.414/1}.paper.portrait{width:min(100%,620px);aspect-ratio:1/1.414}
+#drawCanvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+#pageImage{position:absolute;max-width:34%;max-height:34%;object-fit:contain;right:4%;top:4%;display:none;z-index:1;cursor:move}
+#noteText{position:absolute;left:5%;top:5%;width:60%;height:35%;z-index:2;border:0;outline:0;resize:none;background:transparent;color:#303047;font:17px/1.65 system-ui,sans-serif}
+#noteText::placeholder{color:#aaa8bc}
+.side{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;height:max-content}
+.side h2{font-size:1rem;margin:0 0 12px}.side label{display:block;font-size:.9rem;margin:13px 0 6px;color:var(--muted)}
+.side p{font-size:.86rem;line-height:1.55;color:var(--muted)}
+.side button{width:100%;margin-top:8px}
+.status{font-size:.8rem;color:var(--muted);margin-top:10px;min-height:1.3em}
+.hidden{display:none!important}
+footer{text-align:center;padding:24px 12px;color:var(--muted);font-size:.8rem}
+@media(max-width:800px){main{grid-template-columns:1fr}.side{order:-1}.side .help{display:none}header{align-items:flex-start;flex-direction:column}.toolbar{width:100%}.paper-wrap{min-height:260px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Luci<span>el</span><small>YOUR PERSONAL STUDY SPACE</small></div>
+  <div class="toolbar">
+    <button id="portraitBtn">세로 페이지</button>
+    <button id="landscapeBtn" class="primary">가로 페이지</button>
+    <label class="upload-label" for="imageInput">사진 넣기</label>
+    <input id="imageInput" class="hidden" type="file" accept="image/*">
+    <button id="clearBtn">필기 지우기</button>
+    <button id="saveBtn" class="primary">내 기기에 저장</button>
+  </div>
+</header>
+<main>
+  <section class="workspace">
+    <div class="welcome">
+      <h1>오늘의 공부 노트</h1>
+      <p>사진을 넣고, 글을 쓰고, 펜으로 자유롭게 필기해 봐.</p>
+    </div>
+    <div class="paper-wrap">
+      <div id="paper" class="paper landscape">
+        <textarea id="noteText" placeholder="여기에 공부 내용을 적어 봐..."></textarea>
+        <img id="pageImage" alt="추가한 공부 사진">
+        <canvas id="drawCanvas"></canvas>
+      </div>
+    </div>
+    <div id="status" class="status">필기 내용은 현재 브라우저에 자동 저장돼.</div>
+  </section>
+  <aside class="side">
+    <h2>필기 도구</h2>
+    <label for="penColor">펜 색상</label>
+    <input id="penColor" type="color" value="#28243d" style="width:100%;height:42px">
+    <label for="penSize">펜 굵기</label>
+    <select id="penSize" style="width:100%">
+      <option value="2">얇게</option><option value="4" selected>보통</option><option value="7">굵게</option><option value="12">아주 굵게</option>
+    </select>
+    <button id="eraseBtn">지우개 모드: 끔</button>
+    <button id="removeImageBtn">사진 제거</button>
+    <p class="help">팁: 마우스나 터치펜으로 페이지에 직접 필기할 수 있어. ‘내 기기에 저장’을 누르면 노트를 PNG 이미지로 저장해.</p>
+    <p>참고: 이 첫 버전은 로그인/온라인 동기화가 없어. 같은 브라우저에서 쓰고, 중요한 노트는 PNG로 저장해 둬.</p>
+  </aside>
+</main>
+<footer>Luciel Study Space · 작은 기록이 큰 성장을 만들어요.</footer>
+<script>
+const paper = document.getElementById('paper');
+const canvas = document.getElementById('drawCanvas');
+const ctx = canvas.getContext('2d');
+const noteText = document.getElementById('noteText');
+const pageImage = document.getElementById('pageImage');
+const status = document.getElementById('status');
+const penColor = document.getElementById('penColor');
+const penSize = document.getElementById('penSize');
+let drawing = false, erasing = false, last = null;
+
+function resizeCanvas(keep=true) {
+  let snapshot = null;
+  if (keep && canvas.width && canvas.height) {
+    snapshot = document.createElement('canvas');
+    snapshot.width = canvas.width; snapshot.height = canvas.height;
+    snapshot.getContext('2d').drawImage(canvas,0,0);
+  }
+  const rect = paper.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.round(rect.width*dpr);
+  canvas.height = Math.round(rect.height*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  if (snapshot) ctx.drawImage(snapshot,0,0,snapshot.width,snapshot.height,0,0,rect.width,rect.height);
+}
+function setOrientation(mode) {
+  paper.classList.toggle('portrait', mode==='portrait');
+  paper.classList.toggle('landscape', mode==='landscape');
+  document.getElementById('portraitBtn').classList.toggle('primary',mode==='portrait');
+  document.getElementById('landscapeBtn').classList.toggle('primary',mode==='landscape');
+  requestAnimationFrame(()=>resizeCanvas(true));
+  localStorage.setItem('luciel-orientation',mode);
+}
+document.getElementById('portraitBtn').onclick=()=>setOrientation('portrait');
+document.getElementById('landscapeBtn').onclick=()=>setOrientation('landscape');
+
+function point(e) {
+  const r=canvas.getBoundingClientRect();
+  return {x:e.clientX-r.left,y:e.clientY-r.top};
+}
+canvas.addEventListener('pointerdown',e=>{
+  drawing=true; last=point(e); canvas.setPointerCapture(e.pointerId);
+  ctx.beginPath();ctx.moveTo(last.x,last.y);
+});
+canvas.addEventListener('pointermove',e=>{
+  if(!drawing)return;
+  const p=point(e);ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.lineWidth=Number(penSize.value);
+  ctx.strokeStyle=erasing?'#ffffff':penColor.value;
+  ctx.globalCompositeOperation='source-over';
+  ctx.lineTo(p.x,p.y);ctx.stroke();last=p;
+});
+function stopDraw(){drawing=false;last=null;ctx.closePath();saveDraft();}
+canvas.addEventListener('pointerup',stopDraw);
+canvas.addEventListener('pointercancel',stopDraw);
+document.getElementById('eraseBtn').onclick=()=>{
+  erasing=!erasing;
+  document.getElementById('eraseBtn').textContent='지우개 모드: '+(erasing?'켬':'끔');
+};
+document.getElementById('clearBtn').onclick=()=>{
+  if(confirm('손으로 그린 필기를 모두 지울까?')){
+    ctx.clearRect(0,0,canvas.width,canvas.height);saveDraft();status.textContent='필기를 지웠어.';
+  }
+};
+document.getElementById('imageInput').addEventListener('change',e=>{
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    pageImage.src=reader.result;pageImage.style.display='block';
+    localStorage.setItem('luciel-image',reader.result);
+    status.textContent='사진을 추가했어.';
+  };
+  reader.readAsDataURL(file);e.target.value='';
+});
+document.getElementById('removeImageBtn').onclick=()=>{
+  pageImage.removeAttribute('src');pageImage.style.display='none';localStorage.removeItem('luciel-image');
+};
+noteText.addEventListener('input',saveDraft);
+function saveDraft(){
+  try{
+    localStorage.setItem('luciel-text',noteText.value);
+    localStorage.setItem('luciel-drawing',canvas.toDataURL('image/png'));
+  }catch(e){status.textContent='저장 공간이 부족할 수 있어. PNG로 저장해 줘.'}
+}
+function loadDraft(){
+  noteText.value=localStorage.getItem('luciel-text')||'';
+  const image=localStorage.getItem('luciel-image');
+  if(image){pageImage.src=image;pageImage.style.display='block'}
+  const drawing=localStorage.getItem('luciel-drawing');
+  if(drawing){
+    const img=new Image();img.onload=()=>ctx.drawImage(img,0,0,canvas.width/(window.devicePixelRatio||1),canvas.height/(window.devicePixelRatio||1));img.src=drawing;
+  }
+  setOrientation(localStorage.getItem('luciel-orientation')||'landscape');
+}
+document.getElementById('saveBtn').onclick=()=>{
+  const r=paper.getBoundingClientRect(),scale=2;
+  const exportCanvas=document.createElement('canvas');
+  exportCanvas.width=r.width*scale;exportCanvas.height=r.height*scale;
+  const c=exportCanvas.getContext('2d');c.scale(scale,scale);c.fillStyle='#fff';c.fillRect(0,0,r.width,r.height);
+  // Text is rendered onto the export image.
+  c.fillStyle='#303047';c.font='17px system-ui';c.textBaseline='top';
+  const text=noteText.value.split('\n');let y=r.height*.05;
+  text.forEach(line=>{c.fillText(line, r.width*.05, y, r.width*.58);y+=28});
+  if(pageImage.complete&&pageImage.naturalWidth){
+    const ir=pageImage.getBoundingClientRect();const pr=paper.getBoundingClientRect();
+    c.drawImage(pageImage,ir.left-pr.left,ir.top-pr.top,ir.width,ir.height);
+  }
+  c.drawImage(canvas,0,0,canvas.width,canvas.height,0,0,r.width,r.height);
+  const a=document.createElement('a');a.download='luciel-study-note.png';a.href=exportCanvas.toDataURL('image/png');a.click();
+  status.textContent='PNG 파일로 저장했어.';
+};
+window.addEventListener('resize',()=>resizeCanvas(true));
+loadDraft();
+</script>
+</body>
+</html>
